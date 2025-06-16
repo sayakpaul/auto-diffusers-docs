@@ -1,8 +1,14 @@
 import argparse
-from llm import LLMCodeOptimizer
+from utils.llm_utils import LLMCodeOptimizer
 from prompts import system_prompt, generate_prompt
-from pipeline_utils import determine_pipe_loading_memory
-from hardware_utils import categorize_vram, categorize_ram, get_gpu_vram_gb, get_system_ram_gb, is_compile_friendly_gpu
+from utils.pipeline_utils import determine_pipe_loading_memory
+from utils.hardware_utils import (
+    categorize_vram,
+    categorize_ram,
+    get_gpu_vram_gb,
+    get_system_ram_gb,
+    is_compile_friendly_gpu,
+)
 
 
 def create_parser():

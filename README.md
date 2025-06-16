@@ -195,6 +195,102 @@ image.save(output_path)
 print(f"Image saved to {output_path}")
 
 ```
-```
+````
 
 </details>
+<br>
+When invoked from an RTX 4090, it outputs:
+
+<details>
+<summary>Expand</summary>
+
+````sh
+System RAM: 125.54 GB
+RAM Category: large
+
+GPU VRAM: 23.99 GB
+VRAM Category: medium
+current_generate_prompt='\npipeline_loading_memory_GB: 31.424\navailable_system_ram_GB: 125.54026794433594\navailable_gpu_vram_GB: 23.98828125\nenable_lossy_outputs: False\nenable_torch_compile: True\n'
+Sending request to Gemini...
+```python
+import torch
+from diffusers import DiffusionPipeline
+import os # For creating offload directories if needed, though not directly used in this solution
+
+# --- User-provided information (interpreted) ---
+# Checkpoint ID will be a placeholder as it's not provided by the user directly in the input.
+# pipeline_loading_memory_GB: 31.424 GB
+# available_system_ram_GB: 125.54 GB (Categorized as "large": > 40GB)
+# available_gpu_vram_GB: 23.98 GB (Categorized as "medium": > 8GB <= 24GB)
+# enable_lossy_outputs: False (User prefers no quantization)
+# enable_torch_compile: True (User wants to enable torch.compile)
+
+# --- Configuration ---
+# Placeholder for the actual checkpoint ID. Replace with the desired model ID.
+CKPT_ID = "black-forest-labs/FLUX.1-dev" # Example from Diffusers library.
+PROMPT = "photo of a dog sitting beside a river"
+
+print(f"--- Optimizing inference for CKPT_ID: {CKPT_ID} ---")
+print(f"Pipeline loading memory: {31.424} GB")
+print(f"Available System RAM: {125.54} GB (Large)")
+print(f"Available GPU VRAM: {23.98} GB (Medium)")
+print(f"Lossy outputs (quantization): {'Disabled' if not False else 'Enabled'}")
+print(f"Torch.compile: {'Enabled' if True else 'Disabled'}")
+print("-" * 50)
+
+# --- 1. Load the Diffusion Pipeline ---
+# Use bfloat16 for a good balance of memory and performance.
+print(f"Loading pipeline '{CKPT_ID}' with torch_dtype=torch.bfloat16...")
+pipe = DiffusionPipeline.from_pretrained(CKPT_ID, torch_dtype=torch.bfloat16)
+print("Pipeline loaded.")
+
+# --- 2. Apply Memory Optimizations ---
+# Analysis:
+# - Pipeline memory (31.424 GB) exceeds available GPU VRAM (23.98 GB).
+# - System RAM (125.54 GB) is large.
+# Strategy: Use `enable_model_cpu_offload()`. This moves model components to CPU when not
+# in use, swapping them to GPU on demand. This is ideal when VRAM is insufficient but system
+# RAM is abundant.
+
+print("Applying memory optimization: `pipe.enable_model_cpu_offload()`...")
+pipe.enable_model_cpu_offload()
+print("Model CPU offloading enabled. Components will dynamically move between CPU and GPU.")
+
+# --- 3. Apply Speed Optimizations (torch.compile) ---
+# Analysis:
+# - `enable_torch_compile` is True.
+# - Model offloading (`enable_model_cpu_offload`) is applied.
+# Strategy: Enable torch.compile with `recompile_limit` as offloading is used.
+# Do not use `fullgraph=True` when offloading is active.
+
+print("Applying speed optimization: `torch.compile()`...")
+torch._dynamo.config.recompile_limit = 1000 # Recommended when offloading is applied.
+# torch._dynamo.config.capture_dynamic_output_shape_ops = True # Only for bitsandbytes, not applicable here.
+
+# Compile the main computational component (e.g., transformer or unet).
+# FLUX models primarily use a transformer. For other models, it might be `pipe.unet`.
+if hasattr(pipe, "transformer"):
+    print("Compiling `pipe.transformer`...")
+    pipe.transformer.compile()
+elif hasattr(pipe, "unet"):
+    print("Compiling `pipe.unet`...")
+    pipe.unet.compile()
+else:
+    print("Warning: Neither `pipe.transformer` nor `pipe.unet` found for compilation. Skipping `torch.compile` for core component.")
+
+print("Speed optimizations applied.")
+
+# --- 4. Perform Inference ---
+print(f"Starting image generation for prompt: '{PROMPT}'")
+# The pipeline handles component swapping automatically due to `enable_model_cpu_offload()`.
+image = pipe(PROMPT).images[0]
+print("Image generation complete.")
+
+# --- 5. Save or Display the Result ---
+output_path = "generated_image.png"
+image.save(output_path)
+print(f"Generated image saved to '{output_path}'")
+
+print("\n--- Inference process finished successfully ---")
+```
+````

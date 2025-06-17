@@ -47,6 +47,7 @@ def main(args):
 
     llm = LLMCodeOptimizer(system_prompt=system_prompt)
     current_generate_prompt = generate_prompt.format(
+        ckpt_id=args.ckpt_id,
         pipeline_loading_memory=load_memory,
         available_system_ram=ram_gb,
         available_gpu_vram=vram_gb,

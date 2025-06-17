@@ -163,11 +163,14 @@ pipe.transformer.compile(fullgraph=True)
 * When the available VRAM > pipeline loading memory, you should suggest using `pipe = pipe.to("cuda")`.
 * If the user prefers not to use quantization and further reduce memory, then suggest using:
 `pipe.transformer.enable_layerwise_casting(storage_dtype=torch.float8_e4m3fn, compute_dtype=torch.bfloat16)`.
+* Do not add any extra imports or lines of code that will not be used. 
+* Do not try to be too creative about combining the optimization techniques laid out above. 
 
 Please think about these guidelines carefully before producing the outputs.
 """
 
 generate_prompt = """
+ckpt_id: {ckpt_id}
 pipeline_loading_memory_GB: {pipeline_loading_memory}
 available_system_ram_GB: {available_system_ram}
 available_gpu_vram_GB: {available_gpu_vram}

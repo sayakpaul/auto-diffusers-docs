@@ -6,7 +6,7 @@ MODEL_NAME = "gemini-2.5-flash-preview-05-20"
 
 
 class LLMCodeOptimizer:
-    def __init__(self, system_prompt: str):
+    def __init__(self, system_prompt: str, llm_seed: int = 0):
         api_key = os.getenv("GOOGLE_API_KEY")
         if api_key is None:
             raise ValueError("Must provide an API key for Gemini through the `GOOGLE_API_KEY` env variable.")

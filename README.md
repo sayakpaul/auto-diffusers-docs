@@ -21,6 +21,8 @@ Then run:
 python e2e_example.py 
 ```
 
+By default, the `e2e_example.py` script uses Flux.1-Dev, but this can be configured through the `--ckpt_id` argument.
+
 Full usage:
 
 ```sh

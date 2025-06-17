@@ -147,11 +147,10 @@ pipe = DiffusionPipeline.from_pretrained(CKPT_ID, quantization_config=quant_conf
 If the user wants to additionally boost inference speed, then you should the following line of code just before
 inference:
 
-```py
-torch._dynamo.config.recompile_limit = 1000  # add this when offloading was applied
-torch._dynamo.config.capture_dynamic_output_shape_ops = True # add this when bitsandbytes was used
-pipe.transformer.compile()
-```
+* Add the following when offloading was applied: `torch._dynamo.config.recompile_limit = 1000`.
+* ONLY, add the following when `bitsandbytes` was used for `quant_backend`: `torch._dynamo.config.capture_dynamic_output_shape_ops = True`.
+* Finally, add `pipe.transformer.compile()`.
+* Add `pipe.vae.decode = torch.compile(vae.decode)` as a comment.
 
 In case no offloading was applied, then the line should be:
 
@@ -167,6 +166,8 @@ pipe.transformer.compile(fullgraph=True)
 * Do NOT add any extra imports or lines of code that will not be used. 
 * Do NOT try to be too creative about combining the optimization techniques laid out above.
 * Do NOT add extra arguments to the `pipe` call other than the `prompt`.
+* Add a comment before the `pipe` call, saying "Modify the pipe call arguments as needed."
+* Do NOT add any serialization step after the pipe call.
 
 Please think about these guidelines carefully before producing the outputs.
 """

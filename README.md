@@ -298,3 +298,56 @@ print(f"Generated image saved to '{output_path}'")
 print("\n--- Inference process finished successfully ---")
 ```
 ````
+</details>
+
+### More outputs
+
+<details>
+<summary>"Wan-AI/Wan2.1-T2V-14B-Diffusers" with lossy outputs enabled</summary>
+
+````sh
+System RAM: 125.54 GB
+RAM Category: large
+
+GPU VRAM: 23.99 GB
+VRAM Category: medium
+("current_generate_prompt='\\nckpt_id: "
+ 'Wan-AI/Wan2.1-T2V-14B-Diffusers\\npipeline_loading_memory_GB: '
+ '37.432\\navailable_system_ram_GB: '
+ '125.54026794433594\\navailable_gpu_vram_GB: '
+ '23.98828125\\nenable_lossy_outputs: True\\nis_fp8_supported: '
+ "True\\nenable_torch_compile: True\\n'")
+Sending request to Gemini...
+```python
+from diffusers import DiffusionPipeline
+from diffusers.quantizers import PipelineQuantizationConfig
+import torch
+
+ckpt_id = "Wan-AI/Wan2.1-T2V-14B-Diffusers"
+
+quant_config = PipelineQuantizationConfig(
+    quant_backend="torchao",
+    quant_kwargs={"quant_type": "float8dq_e4m3_row"},
+    components_to_quantize=["transformer"]
+)
+pipe = DiffusionPipeline.from_pretrained(ckpt_id, quantization_config=quant_config, torch_dtype=torch.bfloat16)
+
+# Apply model CPU offload due to VRAM constraints
+pipe.enable_model_cpu_offload()
+
+# torch.compile() configuration
+torch._dynamo.config.recompile_limit = 1000
+pipe.transformer.compile()
+# pipe.vae.decode = torch.compile(pipe.vae.decode) # Uncomment if you want to compile VAE decode as well
+
+prompt = "photo of a dog sitting beside a river"
+
+# Modify the pipe call arguments as needed.
+image = pipe(prompt).images[0]
+
+# You can save the image or perform further operations here
+# image.save("generated_image.png")
+```
+````
+</details>
+<small>Ran on an RTX 4090</small>

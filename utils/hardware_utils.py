@@ -116,11 +116,13 @@ def is_compile_friendly_gpu(index_or_device: Union[int, str, torch.device] = 0) 
     prop = DeviceProperties.create(device)
     return prop.major >= 8
 
+
 @functools.lru_cache()
 def is_sm_version(major: int, minor: int) -> bool:
     """Check if the CUDA version is exactly major.minor"""
     is_cuda = torch.cuda.is_available() and torch.version.cuda
     return torch.cuda.get_device_capability() == (major, minor) if is_cuda else False
+
 
 def is_fp8_friendly():
     return is_sm_version(8, 9)

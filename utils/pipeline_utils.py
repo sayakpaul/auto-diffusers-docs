@@ -9,6 +9,7 @@ import torch
 import functools
 import os
 
+
 def _get_dtype_from_safetensor_file(file_path):
     """Inspects a safetensors file and returns the dtype of the first tensor."""
     try:
@@ -16,7 +17,7 @@ def _get_dtype_from_safetensor_file(file_path):
         state_dict = safetensors.torch.load_file(file_path)
         if not state_dict:
             return "N/A (empty)"
-        
+
         # Get the dtype from the first tensor in the state dict
         first_tensor = next(iter(state_dict.values()))
         return first_tensor.dtype
@@ -44,21 +45,19 @@ def _process_components(component_files, file_accessor_fn, disable_bf16=False):
     for name, files in component_files.items():
         # Get dtype by inspecting the first file of the component
         first_file = files[0]
-        
+
         # The accessor function handles how to get the path (download vs local)
         # and its size and relative name.
         inspection_path, _, _ = file_accessor_fn(first_file)
         dtype = _get_dtype_from_safetensor_file(inspection_path)
-        
+
         component_size_bytes = 0
         component_file_details = []
         for f in files:
             _, size_bytes, rel_filename = file_accessor_fn(f)
             component_size_bytes += size_bytes
-            component_file_details.append(
-                {"filename": rel_filename, "size_mb": size_bytes / (1024**2)}
-            )
-        
+            component_file_details.append({"filename": rel_filename, "size_mb": size_bytes / (1024**2)})
+
         if dtype == torch.float32 and not disable_bf16:
             print(
                 f"The `dtype` for component ({name}) is torch.float32. Since bf16 computation is not disabled "
@@ -67,11 +66,11 @@ def _process_components(component_files, file_accessor_fn, disable_bf16=False):
             total_size_bytes += component_size_bytes / 2
         else:
             total_size_bytes += component_size_bytes
-        
+
         components_info[name] = {
             "size_gb": round(component_size_bytes / (1024**3), 3),
             "dtype": dtype,
-            "files": sorted(component_file_details, key=lambda x: x['filename'])
+            "files": sorted(component_file_details, key=lambda x: x["filename"]),
         }
 
     return {
@@ -98,27 +97,24 @@ def _determine_memory_from_hub_ckpt(ckpt_id, variant=None, disable_bf16=False):
         component_files[component_name].append(sibling)
 
     with tempfile.TemporaryDirectory() as temp_dir:
+
         def hub_file_accessor(file_obj):
             """Accessor for Hub files: downloads them and returns path/size."""
             print(f"Downloading '{file_obj.rfilename}' for inspection...")
-            path = hf_hub_download(
-                repo_id=ckpt_id,
-                filename=file_obj.rfilename,
-                local_dir=temp_dir,
-                local_dir_use_symlinks=False,
-            )
+            path = hf_hub_download(repo_id=ckpt_id, filename=file_obj.rfilename, local_dir=temp_dir)
             return path, file_obj.size, file_obj.rfilename
-        
+
         # We only need to download one file per component for dtype inspection.
         # To make this efficient, we create a specialized accessor for the processing loop
         # that only downloads the *first* file encountered for a component.
         downloaded_for_inspection = {}
+
         def efficient_hub_accessor(file_obj):
             component_name = Path(file_obj.rfilename).parent.name
             if component_name not in downloaded_for_inspection:
                 path, _, _ = hub_file_accessor(file_obj)
                 downloaded_for_inspection[component_name] = path
-            
+
             inspection_path = downloaded_for_inspection[component_name]
             return inspection_path, file_obj.size, file_obj.rfilename
 
@@ -142,7 +138,7 @@ def _determine_memory_from_local_ckpt(path: str, variant=None, disable_bf16=Fals
     for file_path in all_safetensors_paths:
         component_name = file_path.parent.name
         component_files[component_name].append(file_path)
-    
+
     def local_file_accessor(file_path):
         """Accessor for local files: just returns their path and size."""
         return file_path, file_path.stat().st_size, str(file_path.relative_to(ckpt_path))
@@ -161,7 +157,7 @@ def determine_pipe_loading_memory(ckpt_id: str, variant=None, disable_bf16=False
 
 
 if __name__ == "__main__":
-    output = _determine_memory_from_hub_ckpt("black-forest-labs/FLUX.1-dev")
+    output = _determine_memory_from_hub_ckpt("Wan-AI/Wan2.1-T2V-14B-Diffusers")
     total_size_gb = output["total_loading_memory_gb"]
     safetensor_files = output["components"]
     print(f"{total_size_gb=} GB")

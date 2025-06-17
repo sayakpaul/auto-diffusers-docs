@@ -8,6 +8,7 @@ from utils.hardware_utils import (
     get_gpu_vram_gb,
     get_system_ram_gb,
     is_compile_friendly_gpu,
+    is_fp8_friendly
 )
 
 
@@ -19,8 +20,9 @@ def create_parser():
         default="black-forest-labs/FLUX.1-dev",
         help="Can be a repo id from the Hub or a local path where the checkpoint is stored.",
     )
-    parser.add_argument("--variant", type=str, default=None)
-    parser.add_argument("--enable_lossy", action="store_true")
+    parser.add_argument("--gemini_model", type=str, default="gemini-2.5-flash-preview-05-20", help="Gemini model to use. Choose from https://ai.google.dev/gemini-api/docs/models.")
+    parser.add_argument("--variant", type=str, default=None, help="If the `ckpt_id` has variants, supply this flag to estimate compute. Example: 'fp16'.")
+    parser.add_argument("--enable_lossy", action="store_true", help="When enabled, the code will include snippets for enabling quantization.")
     return parser
 
 
@@ -44,14 +46,16 @@ def main(args):
         print("\nGPU VRAM check complete.")
 
     is_compile_friendly = is_compile_friendly_gpu()
+    is_fp8_friendly = is_fp8_friendly()
 
-    llm = LLMCodeOptimizer(system_prompt=system_prompt)
+    llm = LLMCodeOptimizer(model_name=args.gemini_model, system_prompt=system_prompt)
     current_generate_prompt = generate_prompt.format(
         ckpt_id=args.ckpt_id,
         pipeline_loading_memory=load_memory,
         available_system_ram=ram_gb,
         available_gpu_vram=vram_gb,
         enable_lossy_outputs=args.enable_lossy,
+        is_fp8_supported=is_fp8_friendly,
         enable_torch_compile=is_compile_friendly,
     )
     print(f"{current_generate_prompt=}")

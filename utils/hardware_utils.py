@@ -103,31 +103,6 @@ def categorize_vram(vram_gb):
         return "large"
 
 
-def main():
-    """
-    Main function to get and display hardware configuration.
-    """
-    print("--- System Hardware Configuration Utility ---")
-
-    # Get and categorize System RAM
-    ram_gb = get_system_ram_gb()
-    ram_category = categorize_ram(ram_gb)
-    if ram_gb is not None:
-        print(f"\nSystem RAM: {ram_gb:.2f} GB")
-        print(f"RAM Category: {ram_category}")
-    else:
-        print("\nCould not determine System RAM.")
-
-    # Get and categorize GPU VRAM
-    vram_gb = get_gpu_vram_gb()
-    vram_category = categorize_vram(vram_gb)
-    if vram_gb is not None:
-        print(f"\nGPU VRAM: {vram_gb:.2f} GB")
-        print(f"VRAM Category: {vram_category}")
-    else:
-        print("\nGPU VRAM check complete.")
-
-
 @functools.cache
 def is_compile_friendly_gpu(index_or_device: Union[int, str, torch.device] = 0) -> bool:
     """Hand-coded rules from experiments. Don't take seriously."""
@@ -141,7 +116,11 @@ def is_compile_friendly_gpu(index_or_device: Union[int, str, torch.device] = 0) 
     prop = DeviceProperties.create(device)
     return prop.major >= 8
 
+@functools.lru_cache()
+def is_sm_version(major: int, minor: int) -> bool:
+    """Check if the CUDA version is exactly major.minor"""
+    is_cuda = torch.cuda.is_available() and torch.version.cuda
+    return torch.cuda.get_device_capability() == (major, minor) if is_cuda else False
 
-if __name__ == "__main__":
-    main()
-    print(is_compile_friendly_gpu("cuda"))
+def is_fp8_friendly():
+    return is_sm_version(8, 9)

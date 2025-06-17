@@ -26,13 +26,15 @@ By default, the `e2e_example.py` script uses Flux.1-Dev, but this can be configu
 Full usage:
 
 ```sh
-usage: e2e_example.py [-h] [--ckpt_id CKPT_ID] [--variant VARIANT] [--enable_lossy]
+usage: e2e_example.py [-h] [--ckpt_id CKPT_ID] [--gemini_model GEMINI_MODEL] [--variant VARIANT] [--enable_lossy]
 
 options:
-  -h, --help         show this help message and exit
-  --ckpt_id CKPT_ID  Can be a repo id from the Hub or a local path where the checkpoint is stored.
-  --variant VARIANT
-  --enable_lossy
+  -h, --help            show this help message and exit
+  --ckpt_id CKPT_ID     Can be a repo id from the Hub or a local path where the checkpoint is stored.
+  --gemini_model GEMINI_MODEL
+                        Gemini model to use. Choose from https://ai.google.dev/gemini-api/docs/models.
+  --variant VARIANT     If the `ckpt_id` has variants, supply this flag to estimate compute. Example: 'fp16'.
+  --enable_lossy        When enabled, the code will include snippets for enabling quantization.
 ```
 
 ## Example outputs

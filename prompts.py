@@ -21,7 +21,8 @@ needs. More specifically, you will be provided with the following information (i
 * Loading memory of a diffusion pipeline in GB
 * Available system RAM in GB
 * Available GPU VRAM in GB
-* If the user can afford to have lossy outputs (the like of quantization)
+* If the user can afford to have lossy outputs (the likes of quantization)
+* If FP8 is supported
 * If the available GPU supports the latest `torch.compile()` knobs
 
 There are three categories of system RAM, broadly:
@@ -175,5 +176,6 @@ pipeline_loading_memory_GB: {pipeline_loading_memory}
 available_system_ram_GB: {available_system_ram}
 available_gpu_vram_GB: {available_gpu_vram}
 enable_lossy_outputs: {enable_lossy_outputs}
+is_fp8_supported: {is_fp8_supported}
 enable_torch_compile: {enable_torch_compile}
 """

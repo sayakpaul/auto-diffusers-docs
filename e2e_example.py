@@ -10,7 +10,7 @@ from utils.hardware_utils import (
     is_compile_friendly_gpu,
     is_fp8_friendly
 )
-
+from pprint import pprint
 
 def create_parser():
     parser = argparse.ArgumentParser()
@@ -47,7 +47,7 @@ def main(args):
         print("\nGPU VRAM check complete.")
 
     is_compile_friendly = is_compile_friendly_gpu()
-    is_fp8_friendly = is_fp8_friendly()
+    is_fp8_compatible = is_fp8_friendly()
 
     llm = LLMCodeOptimizer(model_name=args.gemini_model, system_prompt=system_prompt)
     current_generate_prompt = generate_prompt.format(
@@ -56,10 +56,10 @@ def main(args):
         available_system_ram=ram_gb,
         available_gpu_vram=vram_gb,
         enable_lossy_outputs=args.enable_lossy,
-        is_fp8_supported=is_fp8_friendly,
+        is_fp8_supported=is_fp8_compatible,
         enable_torch_compile=is_compile_friendly,
     )
-    print(f"{current_generate_prompt=}")
+    pprint(f"{current_generate_prompt=}")
     print(llm(current_generate_prompt))
 
 

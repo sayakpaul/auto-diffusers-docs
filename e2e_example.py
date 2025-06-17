@@ -22,13 +22,14 @@ def create_parser():
     )
     parser.add_argument("--gemini_model", type=str, default="gemini-2.5-flash-preview-05-20", help="Gemini model to use. Choose from https://ai.google.dev/gemini-api/docs/models.")
     parser.add_argument("--variant", type=str, default=None, help="If the `ckpt_id` has variants, supply this flag to estimate compute. Example: 'fp16'.")
+    parser.add_argument("--disable_bf16", action="store_true", help="When enabled the load memory is affected. Prefer not enabling this flag.")
     parser.add_argument("--enable_lossy", action="store_true", help="When enabled, the code will include snippets for enabling quantization.")
     return parser
 
 
 def main(args):
-    load_memory = determine_pipe_loading_memory(args.ckpt_id, args.variant)[0]
-
+    loading_mem_out = determine_pipe_loading_memory(args.ckpt_id, args.variant, args.disable_bf16)
+    load_memory = loading_mem_out["total_loading_memory_gb"]
     ram_gb = get_system_ram_gb()
     ram_category = categorize_ram(ram_gb)
     if ram_gb is not None:

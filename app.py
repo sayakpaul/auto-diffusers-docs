@@ -93,11 +93,21 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         with gr.Column(scale=1):
             submit_btn = gr.Button("Estimate Memory ☁", variant="primary", scale=1)
 
+    with gr.Accordion("💡 Tips", open=False):
+        gr.Markdown(
+            """
+            - Try changing to the model from Flash to Pro if the results are bad.
+            - Try to be as specific as possible about your local machine.
+            - As a rule of thumb, GPUs from RTX 4090 and later, are generally good for using `torch.compile()`.
+            - To leverage FP8, the GPU needs to have a compute capability of at least 8.9.
+            """
+        )
+
     with gr.Accordion("Generated LLM Prompt (for debugging)", open=False):
         prompt_output = gr.Textbox(label="Prompt", show_copy_button=True, lines=10, interactive=False)
 
     gr.Markdown("---")
-    gr.Markdown("### Estimation Result")
+    gr.Markdown("### Generated Code")
 
     output_markdown = gr.Markdown(label="LLM Output", value="*Your results will appear here...*")
 

@@ -27,7 +27,7 @@ jobs:
       - name: Create (or reuse) the Spaces repo
         run: |
           huggingface-cli repo create "${HF_REPO}" \
-            --type space \
+            --type space --space_sdk gradio  \
             --exist-ok
 
       - name: Push current repo to HF Spaces

@@ -8,10 +8,36 @@ import tempfile
 import torch
 import functools
 import os
+import requests
+import struct
+from huggingface_hub import hf_hub_url
+
+DTYPE_MAP = {"FP32": torch.float32, "FP16": torch.float16, "BF16": torch.bfloat16}
+
+
+# https://huggingface.co/docs/safetensors/v0.3.2/metadata_parsing#python
+def _parse_single_file(url):
+    print(f"{url=}")
+    token = os.getenv("HF_TOKEN")
+    headers = {"Range": "bytes=0-7", "Authorization": f"Bearer {token}"}
+    response = requests.get(url, headers=headers)
+    length_of_header = struct.unpack("<Q", response.content)[0]
+    headers = {"Range": f"bytes=8-{7 + length_of_header}", "Authorization": f"Bearer {token}"}
+    response = requests.get(url, headers=headers)
+    header = response.json()
+    return header
 
 
 def _get_dtype_from_safetensor_file(file_path):
-    """Inspects a safetensors file and returns the dtype of the first tensor."""
+    """Inspects a safetensors file and returns the dtype of the first tensor.
+
+    If it's not a safetensors file and a URL instead, we query it.
+    """
+    if "https" in file_path:
+        metadata = _parse_single_file(file_path)
+        except_format_metadata_keys = sorted({k for k in metadata if k != "__metadata__"})
+        string_dtype = metadata[except_format_metadata_keys[0]]["dtype"]
+        return DTYPE_MAP[string_dtype]
     try:
         # load_file is simple and sufficient for this info-gathering purpose.
         state_dict = safetensors.torch.load_file(file_path)
@@ -84,7 +110,7 @@ def _determine_memory_from_hub_ckpt(ckpt_id, variant=None, disable_bf16=False):
     """
     Determines memory and dtypes for a checkpoint on the Hugging Face Hub.
     """
-    files_in_repo = model_info(ckpt_id, files_metadata=True).siblings
+    files_in_repo = model_info(ckpt_id, files_metadata=True, token=os.getenv("HF_TOKEN")).siblings
     all_safetensors_siblings = [
         s for s in files_in_repo if s.rfilename.endswith(".safetensors") and "/" in s.rfilename
     ]
@@ -100,9 +126,9 @@ def _determine_memory_from_hub_ckpt(ckpt_id, variant=None, disable_bf16=False):
 
         def hub_file_accessor(file_obj):
             """Accessor for Hub files: downloads them and returns path/size."""
-            print(f"Downloading '{file_obj.rfilename}' for inspection...")
-            path = hf_hub_download(repo_id=ckpt_id, filename=file_obj.rfilename, local_dir=temp_dir)
-            return path, file_obj.size, file_obj.rfilename
+            print(f"Querying '{file_obj.rfilename}' for inspection...")
+            url = hf_hub_url(ckpt_id, file_obj.rfilename)
+            return url, file_obj.size, file_obj.rfilename
 
         # We only need to download one file per component for dtype inspection.
         # To make this efficient, we create a specialized accessor for the processing loop

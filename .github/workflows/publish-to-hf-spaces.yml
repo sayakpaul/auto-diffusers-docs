@@ -26,13 +26,14 @@ jobs:
 
       - name: Create (or reuse) the Spaces repo
         run: |
-          huggingface-cli repo create "${HF_REPO}" \
+          huggingface-cli repo create ${{env.HF_REPO}} \
             --type space --space_sdk gradio  \
             --exist-ok
 
       - name: Push current repo to HF Spaces
         run: |
-          # Add HF remote (force in case history diverged)
-          git remote add hf \
-            https://huggingface.co/spaces/${HF_REPO}
-          git push hf HEAD:main --force
+          huggingface-cli upload ${{env.HF_REPO}} \
+            . . \
+            --repo-type space \
+            --commit-message "Sync from GitHub" \
+            --token "${{ secrets.HF_TOKEN }}"

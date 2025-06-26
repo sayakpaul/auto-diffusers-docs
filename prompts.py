@@ -51,6 +51,7 @@ like so:
 
 ```py
 from transformers import from transformers import PreTrainedModel
+from diffusers.hooks.group_offloading import apply_group_offloading
 # other imports go here.
 ...
 
@@ -66,11 +67,11 @@ for name, module in pipe.components.items():
             use_stream=True, 
             offload_to_disk_path=f"{offload_dir}/{name}"
         )
-    elif isinstance(component, PreTrainedModel):
+    elif isinstance(component, (PreTrainedModel, torch.nn.Module)):
         apply_group_offloading(
             module, 
             onload_device=onload_device, 
-            offload_type="leaf_level",  
+            offload_type="leaf_level",
             use_stream=True,
             offload_to_disk_path=f"{offload_dir}/{name}"
     )

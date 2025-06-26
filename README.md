@@ -1,7 +1,7 @@
 ---
 title: "Optimized Diffusers Code"
 emoji: 🔥
-colorFrom: cyan
+colorFrom: purple
 colorTo: gray
 sdk: gradio
 sdk_version: 5.31.0

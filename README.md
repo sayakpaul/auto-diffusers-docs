@@ -1,5 +1,3 @@
-# auto-diffusers-docs
-
 ---
 title: "Optimized Diffusers Code"
 emoji: 🔥

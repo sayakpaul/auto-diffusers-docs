@@ -100,6 +100,11 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
             - Try to be as specific as possible about your local machine.
             - As a rule of thumb, GPUs from RTX 4090 and later, are generally good for using `torch.compile()`.
             - To leverage FP8, the GPU needs to have a compute capability of at least 8.9.
+            - Check out the following docs for optimization in Diffusers:
+                * [Memory](https://huggingface.co/docs/diffusers/main/en/optimization/memory)
+                * [Caching](https://huggingface.co/docs/diffusers/main/en/optimization/cache)
+                * [Inference acceleration](https://huggingface.co/docs/diffusers/main/en/optimization/fp16)
+                * [PyTorch blog](https://pytorch.org/blog/presenting-flux-fast-making-flux-go-brrr-on-h100s/)
             """
         )
 

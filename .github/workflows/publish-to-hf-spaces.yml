@@ -1,0 +1,38 @@
+name: Publish to HF Spaces
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      HF_REPO: diffusers/optimized-diffusers-code
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install HF CLI
+        run: |
+          python -m pip install --upgrade pip
+          pip install huggingface_hub
+
+      - name: Log in to Hugging Face
+        run: |
+          huggingface-cli login --token "${{ secrets.HF_TOKEN }}"
+
+      - name: Create (or reuse) the Spaces repo
+        run: |
+          huggingface-cli repo create "${HF_REPO}" \
+            --type space \
+            --exist-ok
+
+      - name: Push current repo to HF Spaces
+        run: |
+          # Add HF remote (force in case history diverged)
+          git remote add hf \
+            https://huggingface.co/spaces/${HF_REPO}
+          git push hf HEAD:main --force

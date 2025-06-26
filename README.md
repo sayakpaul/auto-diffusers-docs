@@ -1,5 +1,17 @@
 # auto-diffusers-docs
 
+---
+title: "Optimized Diffusers Code"
+emoji: 🔥
+colorFrom: cyan
+colorTo: gray
+sdk: gradio
+sdk_version: 5.31.0
+app_file: app.py
+pinned: false
+short_description: 'Optimize Diffusers Code on your hardware.'
+---
+
 Still a WIP. Use an LLM to generate reasonable code snippets in a hardware-aware manner for Diffusers.
 
 ### Motivation

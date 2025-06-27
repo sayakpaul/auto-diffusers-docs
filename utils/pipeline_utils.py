@@ -12,7 +12,7 @@ import requests
 import struct
 from huggingface_hub import hf_hub_url
 
-DTYPE_MAP = {"FP32": torch.float32, "FP16": torch.float16, "BF16": torch.bfloat16}
+DTYPE_MAP = {"FP32": torch.float32, "F16": torch.float16, "BF16": torch.bfloat16}
 
 
 # https://huggingface.co/docs/safetensors/v0.3.2/metadata_parsing#python

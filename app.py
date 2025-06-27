@@ -46,14 +46,15 @@ def get_output_code(
 
 
 # --- Gradio UI Definition ---
-with gr.Blocks(theme=gr.themes.Soft()) as demo:
+with gr.Blocks() as demo:
     gr.Markdown(
         """
         # 🧨 Generate Diffusers Inference code snippet tailored to your machine
         Enter a Hugging Face Hub `repo_id` and your system specs to get started for inference.
         This tool uses [Gemini](https://ai.google.dev/gemini-api/docs/models) to generate the code based on your settings. This is based on
         [sayakpaul/auto-diffusers-docs](https://github.com/sayakpaul/auto-diffusers-docs/).
-        """
+        """,
+        elem_id="col-container"
     )
 
     with gr.Row():
@@ -71,8 +72,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                 info="Select the model to generate the analysis.",
             )
             with gr.Row():
-                system_ram = gr.Number(label="System RAM (GB)", value=20)
-                gpu_vram = gr.Number(label="GPU VRAM (GB)", value=8)
+                system_ram = gr.Number(label="Free System RAM (GB)", value=20)
+                gpu_vram = gr.Number(label="Free GPU VRAM (GB)", value=8)
 
             with gr.Row():
                 disable_bf16 = gr.Checkbox(
@@ -92,6 +93,57 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 
         with gr.Column(scale=1):
             submit_btn = gr.Button("Estimate Memory ☁", variant="primary", scale=1)
+    
+    # --- Start of New Code Block ---
+    all_inputs = [
+        repo_id,
+        gemini_model_to_use,
+        disable_bf16,
+        enable_lossy,
+        system_ram,
+        gpu_vram,
+        torch_compile_friendly,
+        fp8_friendly,
+    ]
+
+    with gr.Accordion("Examples (Click to expand)", open=False):
+        gr.Examples(
+            examples=[
+                [
+                    "stabilityai/stable-diffusion-xl-base-1.0",
+                    "gemini-2.5-pro",
+                    False,
+                    False,
+                    64,
+                    24,
+                    True,
+                    True,
+                ],
+                [
+                    "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+                    "gemini-2.5-flash",
+                    False,
+                    True,
+                    16,
+                    8,
+                    False,
+                    False,
+                ],
+                [
+                    "stabilityai/stable-diffusion-3-medium-diffusers",
+                    "gemini-2.5-pro",
+                    False,
+                    False,
+                    32,
+                    16,
+                    True,
+                    False,
+                ],
+            ],
+            inputs=all_inputs,
+            label="Examples (Click to try)",
+        )
+    # --- End of New Code Block ---
 
     with gr.Accordion("💡 Tips", open=False):
         gr.Markdown(
@@ -126,16 +178,6 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     )
 
     # --- Event Handling ---
-    all_inputs = [
-        repo_id,
-        gemini_model_to_use,
-        disable_bf16,
-        enable_lossy,
-        system_ram,
-        gpu_vram,
-        torch_compile_friendly,
-        fp8_friendly,
-    ]
     submit_btn.click(fn=get_output_code, inputs=all_inputs, outputs=[output_markdown, prompt_output])
 
 

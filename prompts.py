@@ -163,7 +163,8 @@ pipe.transformer.compile(fullgraph=True)
 
 * When the available VRAM > pipeline loading memory, you should suggest using `pipe = pipe.to("cuda")`.
 * If the user prefers not to use quantization and further reduce memory, then suggest using:
-`pipe.transformer.enable_layerwise_casting(storage_dtype=torch.float8_e4m3fn, compute_dtype=torch.bfloat16)`.
+`pipe.transformer.enable_layerwise_casting(storage_dtype=torch.float8_e4m3fn, compute_dtype=torch.bfloat16)`. Note
+that this is different from using FP8. In FP8, we use quantization like shown above.
 * Do NOT add any extra imports or lines of code that will not be used. 
 * Do NOT try to be too creative about combining the optimization techniques laid out above.
 * Do NOT add extra arguments to the `pipe` call other than the `prompt`.

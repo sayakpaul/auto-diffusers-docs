@@ -171,6 +171,11 @@ that this is different from using FP8. In FP8, we use quantization like shown ab
 * Add a comment before the `pipe` call, saying "Modify the pipe call arguments as needed."
 * Do NOT add any serialization step after the pipe call.
 
+## Specific guidelines on output format
+
+* When returning the outputs, your thinking/reasoning traces should be within comments.
+* You don't have to put the actual code snippet within a ```python ...``` block.
+
 Please think about these guidelines carefully before producing the outputs.
 """
 

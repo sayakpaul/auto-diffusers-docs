@@ -19,6 +19,7 @@ DTYPE_MAP = {"F32": torch.float32, "F16": torch.float16, "BF16": torch.bfloat16}
 def _parse_single_file(url):
     print(f"{url=}")
     token = os.getenv("HF_TOKEN")
+    assert token, "HF_TOKEN must be set"
     headers = {"Range": "bytes=0-7", "Authorization": f"Bearer {token}"}
     response = requests.get(url, headers=headers)
     length_of_header = struct.unpack("<Q", response.content)[0]

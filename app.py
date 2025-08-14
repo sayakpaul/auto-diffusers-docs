@@ -66,8 +66,8 @@ with gr.Blocks() as demo:
                 value="black-forest-labs/FLUX.1-dev",
             )
             gemini_model_to_use = gr.Dropdown(
-                ["gemini-2.5-flash", "gemini-2.5-pro"],
-                value="gemini-2.5-flash",
+                ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro"],
+                value="gemini-2.5-flash-lite",
                 label="Gemini Model",
                 info="Select the model to generate the analysis.",
             )
@@ -92,7 +92,7 @@ with gr.Blocks() as demo:
                 )
 
         with gr.Column(scale=1):
-            submit_btn = gr.Button("Estimate Memory ☁", variant="primary", scale=1)
+            submit_btn = gr.Button("Get Code ☁", variant="primary", scale=1)
     
     # --- Start of New Code Block ---
     all_inputs = [
@@ -164,9 +164,9 @@ with gr.Blocks() as demo:
         prompt_output = gr.Textbox(label="Prompt", show_copy_button=True, lines=10, interactive=False)
 
     gr.Markdown("---")
-    gr.Markdown("### Generated Code")
-
-    output_markdown = gr.Markdown(label="LLM Output", value="*Your results will appear here...*")
+    
+    with gr.Accordion("Generated Code (expand)", open=False):
+        code_output = gr.Code(interactive=True, language="python")
 
     gr.Markdown(
         """
@@ -178,7 +178,7 @@ with gr.Blocks() as demo:
     )
 
     # --- Event Handling ---
-    submit_btn.click(fn=get_output_code, inputs=all_inputs, outputs=[output_markdown, prompt_output])
+    submit_btn.click(fn=get_output_code, inputs=all_inputs, outputs=[code_output, prompt_output])
 
 
 if __name__ == "__main__":

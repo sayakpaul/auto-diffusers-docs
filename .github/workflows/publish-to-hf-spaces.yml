@@ -36,4 +36,5 @@ jobs:
             . . \
             --repo-type space \
             --commit-message "Sync from GitHub" \
-            --token "${{ secrets.HF_TOKEN }}"
+            --token "${{ secrets.HF_TOKEN }}" \
+            --ignore-patterns ".github/**"

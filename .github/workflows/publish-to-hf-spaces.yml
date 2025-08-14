@@ -32,9 +32,9 @@ jobs:
 
       - name: Push current repo to HF Spaces
         run: |
+          rm -rf .github/
           huggingface-cli upload ${{env.HF_REPO}} \
             . . \
             --repo-type space \
             --commit-message "Sync from GitHub" \
-            --token "${{ secrets.HF_TOKEN }}" \
-            --ignore-patterns ".github/**"
+            --token "${{ secrets.HF_TOKEN }}"

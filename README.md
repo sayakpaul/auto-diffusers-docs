@@ -10,12 +10,11 @@ pinned: false
 short_description: 'Optimize Diffusers Code on your hardware.'
 ---
 
-Still a WIP. Use an LLM to generate reasonable code snippets in a hardware-aware manner for Diffusers.
+Use an LLM to generate reasonable code snippets in a hardware-aware manner for Diffusers. Still experimental.
 
 ### Motivation
 
-Within the Diffusers, we support a bunch of optimization techniques (refer [here](https://huggingface.co/docs/diffusers/main/en/optimization/memory), [here](https://huggingface.co/docs/diffusers/main/en/optimization/cache), and [here](https://huggingface.co/docs/diffusers/main/en/optimization/fp16)). However, it can be
-daunting for our users to determine when to use what. Hence, this repository tries to take a stab
+Within the Diffusers, we support a bunch of optimization techniques (refer [here](https://huggingface.co/docs/diffusers/main/en/optimization/memory), [here](https://huggingface.co/docs/diffusers/main/en/optimization/cache), and [here](https://huggingface.co/docs/diffusers/main/en/optimization/fp16)). However, it can be daunting for our users to determine when to use what. Hence, this repository tries to take a stab
 at using an LLM to generate reasonable code snippets for a given pipeline checkpoint that respects
 user hardware configuration.
 

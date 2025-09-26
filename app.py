@@ -11,11 +11,13 @@ def get_output_code(
     repo_id,
     gemini_model_to_use,
     disable_bf16,
-    enable_lossy,
+    enbale_caching,
+    enable_quantization,
     system_ram,
     gpu_vram,
     torch_compile_friendly,
     fp8_friendly,
+    progress=gr.Progress(track_tqdm=True)
 ):
     loading_mem_out = determine_pipe_loading_memory(repo_id, None, disable_bf16)
     load_memory = loading_mem_out["total_loading_memory_gb"]
@@ -36,7 +38,8 @@ def get_output_code(
         pipeline_loading_memory=load_memory,
         available_system_ram=system_ram,
         available_gpu_vram=gpu_vram,
-        enable_lossy_outputs=enable_lossy,
+        enable_caching=enable_caching,
+        enable_quantization=enable_quantization,
         is_fp8_supported=fp8_friendly,
         enable_torch_compile=torch_compile_friendly,
     )
@@ -79,16 +82,19 @@ with gr.Blocks() as demo:
                 disable_bf16 = gr.Checkbox(
                     label="Disable BF16 (Use FP32)",
                     value=False,
-                    info="Calculate using 32-bit precision instead of 16-bit.",
+                    info="Compute in 32-bit precision (caution ⚠️)",
+                )
+                enable_caching = gr.Checkbox(
+                    label="Enable lossy caching", value=False, info="Consider applying caching for speed"
                 )
                 enable_lossy = gr.Checkbox(
-                    label="Allow Lossy Quantization", value=False, info="Consider 8-bit/4-bit quantization."
+                    label="Allow Lossy Quantization", value=False, info="Consider 8-bit/4-bit quantization"
                 )
                 torch_compile_friendly = gr.Checkbox(
-                    label="torch.compile() friendly", value=False, info="Model is compatible with torch.compile."
+                    label="torch.compile() friendly", value=False, info="Model is compatible with torch.compile"
                 )
                 fp8_friendly = gr.Checkbox(
-                    label="fp8 friendly", value=False, info="Model and hardware support FP8 precision."
+                    label="fp8 friendly", value=False, info="Model and hardware support FP8 precision"
                 )
 
         with gr.Column(scale=1):
@@ -99,6 +105,7 @@ with gr.Blocks() as demo:
         repo_id,
         gemini_model_to_use,
         disable_bf16,
+        enable_caching,
         enable_lossy,
         system_ram,
         gpu_vram,
@@ -114,6 +121,7 @@ with gr.Blocks() as demo:
                     "gemini-2.5-pro",
                     False,
                     False,
+                    False,
                     64,
                     24,
                     True,
@@ -124,6 +132,7 @@ with gr.Blocks() as demo:
                     "gemini-2.5-flash",
                     False,
                     True,
+                    False,
                     16,
                     8,
                     False,
@@ -132,6 +141,7 @@ with gr.Blocks() as demo:
                 [
                     "stabilityai/stable-diffusion-3-medium-diffusers",
                     "gemini-2.5-pro",
+                    False,
                     False,
                     False,
                     32,
@@ -149,8 +159,9 @@ with gr.Blocks() as demo:
         gr.Markdown(
             """
             - Try changing to the model from Flash to Pro if the results are bad.
-            - Try to be as specific as possible about your local machine.
+            - Please provide the VRAM and RAM details accurately as the suggestions depend on them.
             - As a rule of thumb, GPUs from RTX 4090 and later, are generally good for using `torch.compile()`.
+            - When lossy quantization isn't preferred try enabling caching. Caching can still be lossy, though.
             - To leverage FP8, the GPU needs to have a compute capability of at least 8.9.
             - Check out the following docs for optimization in Diffusers:
                 * [Memory](https://huggingface.co/docs/diffusers/main/en/optimization/memory)
@@ -165,7 +176,7 @@ with gr.Blocks() as demo:
 
     gr.Markdown("---")
     
-    with gr.Accordion("Generated Code (expand)", open=False):
+    with gr.Accordion("Generated Code 💻", open=True):
         code_output = gr.Code(interactive=True, language="python")
 
     gr.Markdown(

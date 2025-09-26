@@ -3,7 +3,7 @@ from pathlib import Path
 import functools
 import os
 import safetensors.torch
-from huggingface_hub import model_info, hf_hub_download
+from huggingface_hub import model_info
 import tempfile
 import torch
 import functools
@@ -190,6 +190,3 @@ if __name__ == "__main__":
     print(f"{total_size_gb=} GB")
     print(f"{safetensor_files=}")
     print("\n")
-    # total_size_gb, safetensor_files = _determine_memory_from_local_ckpt("LOCAL_DIR") # change me.
-    # print(f"{total_size_gb=} GB")
-    # print(f"{safetensor_files=}")

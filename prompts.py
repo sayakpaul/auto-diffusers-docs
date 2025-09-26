@@ -15,15 +15,15 @@ image = pipe("photo of a dog sitting beside a river").images[0]
 ```
 
 Your task will be to output a reasonable inference code in Python from user-supplied information about their
-needs. More specifically, you will be provided with the following information (in no particular order):
+needs. More specifically, you will be provided with the following user information (in no particular order):
 
 * `ckpt_id` of the diffusion pipeline
 * Loading memory of a diffusion pipeline in GB
 * Available system RAM in GB
 * Available GPU VRAM in GB
-* If the user can afford to have lossy outputs (the likes of quantization)
-* If FP8 is supported
-* If the available GPU supports the latest `torch.compile()` knobs
+* If the user can afford to have lossy outputs (either quantization or caching)
+* If FP8 precision is supported
+* If the available GPU supports compatibility with `torch.compile`
 
 There are three categories of system RAM, broadly:
 
@@ -59,22 +59,12 @@ onload_device = torch.device("cuda")
 pipe = DiffusionPipeline.from_pretrained(CKPT_ID, torch_dtype=torch.bfloat16)
 
 offload_dir = "DIRECTORY" # change me
-for name, module in pipe.components.items():
-    if hasattr(component, "_supports_group_offloading") and component._supports_group_offloading:
-        module.enable_group_offload(
-            onload_device=onload_device, 
-            offload_type="leaf_level", 
-            use_stream=True, 
-            offload_to_disk_path=f"{offload_dir}/{name}"
-        )
-    elif isinstance(component, (PreTrainedModel, torch.nn.Module)):
-        apply_group_offloading(
-            module, 
-            onload_device=onload_device, 
-            offload_type="leaf_level",
-            use_stream=True,
-            offload_to_disk_path=f"{offload_dir}/{name}"
-    )
+pipe.enable_group_offload(
+    onload_device=onload_device, 
+    offload_type="leaf_level", 
+    use_stream=True, 
+    offload_to_disk_path=f"{offload_dir}/{name}"
+)
     
 # Inference goes here.
 ...
@@ -103,6 +93,32 @@ satisfied by the available VRAM:
 ```py
 pipe = pipe.to("cuda")
 ```
+
+When the user prefers to have lossy outputs (either through quantization or caching), prefer combining offloading
+with either quantization or caching as detailed below. 
+
+## Guidance on using caching
+
+When caching is enabled, you can leverage `FasterCache` like so:
+
+```py
+config = FasterCacheConfig(
+    spatial_attention_block_skip_range=2,
+    spatial_attention_timestep_skip_range=(-1, 681),
+    current_timestep_callback=lambda: pipe.current_timestep,
+    attention_weight_callback=lambda _: 0.3,
+    unconditional_batch_skip_range=5,
+    unconditional_batch_timestep_skip_range=(-1, 781),
+    tensor_format="BCHW", # for video models, this should be BFCHW
+)
+pipe.transformer.enable_cache(config)
+
+# Rest of the code goes here.
+...
+```
+
+Recommend the users to also consult the documentation:
+https://huggingface.co/docs/diffusers/main/en/optimization/cache
 
 ## Guidance on using quantization
 
@@ -143,28 +159,34 @@ pipe = DiffusionPipeline.from_pretrained(CKPT_ID, quantization_config=quant_conf
 ...
 ```
 
+**Some additional notes**:
+
+* Offloading can be combined with quantization. However, this is only supported with `bitsandbytes`.
+* If the VRAM and RAM are very low consider combining quantization with offloading.
+
 ## Guidance on using `torch.compile()`
 
 If the user wants to additionally boost inference speed, then you should the following line of code just before
 inference:
 
-* Add the following when offloading was applied: `torch._dynamo.config.recompile_limit = 1000`.
 * ONLY, add the following when `bitsandbytes` was used for `quant_backend`: `torch._dynamo.config.capture_dynamic_output_shape_ops = True`.
-* Finally, add `pipe.transformer.compile()`.
+* Finally, add `pipe.transformer.compile_repeated_blocks()`.
 * Add `pipe.vae.decode = torch.compile(vae.decode)` as a comment.
 
 In case no offloading was applied, then the line should be:
 
 ```py
-pipe.transformer.compile(fullgraph=True)
+pipe.transformer.compile_repeated_blocks(fullgraph=True)
 ```
 
 ## Other guidelines
 
-* When the available VRAM > pipeline loading memory, you should suggest using `pipe = pipe.to("cuda")`.
-* If the user prefers not to use quantization and further reduce memory, then suggest using:
-`pipe.transformer.enable_layerwise_casting(storage_dtype=torch.float8_e4m3fn, compute_dtype=torch.bfloat16)`. Note
-that this is different from using FP8. In FP8, we use quantization like shown above.
+* For the line of code that actually calls the `pipe`, always recommend users to verify the call arguments.
+* When the available VRAM is somewhat greater than pipeline loading memory, you should suggest using `pipe = pipe.to("cuda")`. But in
+cases where, VRAM is only tiny bit greater, you should suggest the use of offloading. For example, if the available VRAM
+is 32 GBs and pipeline loading memory is 31.5 GBs, it's better to use offloading.
+* If the user prefers not to use quantization and still reduce memory, then suggest using:
+`pipe.transformer.enable_layerwise_casting(storage_dtype=torch.float8_e4m3fn, compute_dtype=torch.bfloat16)`.
 * Do NOT add any extra imports or lines of code that will not be used. 
 * Do NOT try to be too creative about combining the optimization techniques laid out above.
 * Do NOT add extra arguments to the `pipe` call other than the `prompt`.
@@ -184,7 +206,8 @@ ckpt_id: {ckpt_id}
 pipeline_loading_memory_GB: {pipeline_loading_memory}
 available_system_ram_GB: {available_system_ram}
 available_gpu_vram_GB: {available_gpu_vram}
-enable_lossy_outputs: {enable_lossy_outputs}
+enable_caching: {enable_caching}
+enable_quantization: {enable_quantization}
 is_fp8_supported: {is_fp8_supported}
 enable_torch_compile: {enable_torch_compile}
 """
